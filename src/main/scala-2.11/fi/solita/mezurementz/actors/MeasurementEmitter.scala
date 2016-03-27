@@ -27,6 +27,7 @@ class MeasurementEmitter extends Actor with ActorLogging {
   }
 
   context.system.scheduler.schedule(0.seconds, 3.seconds) {
+    log.info("--------")
     log.info("Emitting measurement")
     // Just fire new "measurement" to system
     context.actorSelection("/user/measurement-handler") ! generateMeasurement()

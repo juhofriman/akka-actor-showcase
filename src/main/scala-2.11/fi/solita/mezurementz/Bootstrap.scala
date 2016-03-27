@@ -1,7 +1,7 @@
 package fi.solita.mezurementz
 
 import akka.actor.{Props, ActorSystem}
-import fi.solita.mezurementz.actors.{MeasurementEmitter, MeasurementHandler}
+import fi.solita.mezurementz.actors.{MeasurementAnalyzer, MeasurementEmitter, MeasurementHandler}
 
 /**
   * Created by juhofr on 26/03/16.
@@ -14,4 +14,5 @@ object Bootstrap extends App {
   // Initialize actors
   system.actorOf(Props[MeasurementHandler], "measurement-handler")
   system.actorOf(Props[MeasurementEmitter], "measurement-emitter")
+  system.actorOf(Props[MeasurementAnalyzer], "measurement-analyzer")
 }
