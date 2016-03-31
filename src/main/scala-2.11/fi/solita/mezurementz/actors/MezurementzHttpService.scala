@@ -16,6 +16,7 @@ import spray.httpx.{SprayJsonSupport}
 import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Created by juhofr on 26/03/16.
@@ -33,6 +34,7 @@ trait MezurementzMezurementzHttpAPI extends HttpService with SprayJsonSupport {
   implicit val timeout = Timeout(4, TimeUnit.SECONDS)
 
   val alarmService = actorRefFactory.actorSelection("/user/alarm-service")
+  val measurementHandler = actorRefFactory.actorSelection("/user/measurement-handler")
 
   implicit def exceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
@@ -46,7 +48,7 @@ trait MezurementzMezurementzHttpAPI extends HttpService with SprayJsonSupport {
     respondWithMediaType(`application/json`) {
       path("health") {
         complete {
-          HealthStatus("OK")
+          collectStatus
         }
       } ~
       path("alarms") {
@@ -80,6 +82,13 @@ trait MezurementzMezurementzHttpAPI extends HttpService with SprayJsonSupport {
         }
       }
     }
+  }
+
+  def collectStatus: Future[HealthStatus] = {
+    (measurementHandler ? "status").mapTo[Map[String, String]].map {status =>
+      HealthStatus("OK", status)
+    }
+
   }
 }
 

@@ -1,6 +1,6 @@
 package fi.solita.mezurementz.actors
 
-import java.time.LocalTime
+import java.time.{Instant, LocalTime}
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.duration._
@@ -23,7 +23,7 @@ class MeasurementEmitter(identifier: String, delay: FiniteDuration, interval: Fi
   val random = scala.util.Random
 
   def generateMeasurement(): Measurement = {
-    Measurement(identifier, LocalTime.now(), random.nextLong, random.nextLong)
+    Measurement(identifier, Instant.now(), random.nextLong, random.nextLong)
   }
 
   context.system.scheduler.schedule(delay, interval) {

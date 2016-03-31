@@ -1,6 +1,6 @@
 package fi.solita.mezurementz
 
-import java.time.LocalTime
+import java.time.{Instant, LocalTime}
 
 import spray.json.{JsString, JsValue, JsonFormat, DefaultJsonProtocol}
 
@@ -9,14 +9,14 @@ import spray.json.{JsString, JsValue, JsonFormat, DefaultJsonProtocol}
   */
 object JSONProtocol extends DefaultJsonProtocol {
 
-  implicit object LocalTimeJsonFormat extends JsonFormat[LocalTime] {
-    override def write(obj: LocalTime): JsValue = JsString(obj.toString)
-    override def read(json: JsValue): LocalTime = LocalTime.parse(json.convertTo[String])
+  implicit object InstantJsonFormat extends JsonFormat[Instant] {
+    override def write(obj: Instant): JsValue = JsString(obj.toString)
+    override def read(json: JsValue): Instant = Instant.now()
   }
 
-  implicit val healthStatusFormat = jsonFormat1(HealthStatus)
+  implicit val healthStatusFormat = jsonFormat2(HealthStatus)
   implicit val alarmViewFormat = jsonFormat3(AlarmView)
 }
 
-case class HealthStatus(status: String)
-case class AlarmView(identifier: String, message: String, timestamp: LocalTime)
+case class HealthStatus(status: String, statistics: Map[String, String])
+case class AlarmView(identifier: String, message: String, timestamp: Instant)

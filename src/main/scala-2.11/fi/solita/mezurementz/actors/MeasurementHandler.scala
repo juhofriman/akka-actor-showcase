@@ -1,6 +1,8 @@
 package fi.solita.mezurementz.actors
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.{AtomicLong, AtomicInteger}
 
 import akka.pattern.ask
 import akka.actor.{ActorLogging, Actor}
@@ -17,10 +19,15 @@ class MeasurementHandler extends Actor with ActorLogging {
 
   log.info("Hello! I'm measurement handler")
 
+  val measurementCount = new AtomicInteger(0)
+  val alarmingMeasurementsCount = new AtomicInteger(0)
+  val sumOfProcessingTimes = new AtomicLong(0)
+  val hasAlarms = scala.collection.mutable.Set[String]()
+
   override def receive: Receive = {
     case measurement: Measurement =>
       log.info(s"Measurement received l:${measurement.leftValve} r:${measurement.rightValve}")
-
+      measurementCount.incrementAndGet()
       // Ask measurement-analyzer to analyze measurement
       // Note that ask returns Future[Any], hence .mapTo[AnalyzedMeasurement]
       // Typed actors do exist as well
@@ -33,8 +40,18 @@ class MeasurementHandler extends Actor with ActorLogging {
         if(analyzationResult.isAlarm) {
           // Trigger alarm in the system
           context.actorSelection("/user/alarm-service") ! Alarm(analyzationResult.measurement, analyzationResult.payload)
+          alarmingMeasurementsCount.incrementAndGet()
+          hasAlarms.add(analyzationResult.measurement.identifier)
         }
       }
+    sumOfProcessingTimes.addAndGet(Instant.now().toEpochMilli - measurement.timestamp.toEpochMilli)
+
+    case strCommand: String =>
+      sender() ! Map[String, String](
+        "measurementsReceived" -> measurementCount.get().toString,
+        "alarmingMeasurements" -> alarmingMeasurementsCount.get().toString,
+        "averageMeasurementProcessingTime" -> (sumOfProcessingTimes.get().toFloat / measurementCount.get()).toString,
+        "hasAlarms" -> hasAlarms.mkString(","))
 
     case _ => log.info("Received unrecognized message!")
   }
