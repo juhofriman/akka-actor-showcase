@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Created by juhofr on 26/03/16.
   */
-class MeasurementEmitter extends Actor with ActorLogging {
+class MeasurementEmitter(identifier: String, delay: FiniteDuration, interval: FiniteDuration) extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(4, TimeUnit.SECONDS)
 
@@ -23,10 +23,10 @@ class MeasurementEmitter extends Actor with ActorLogging {
   val random = scala.util.Random
 
   def generateMeasurement(): Measurement = {
-    Measurement("mez-1", LocalTime.now(), random.nextLong, random.nextLong)
+    Measurement(identifier, LocalTime.now(), random.nextLong, random.nextLong)
   }
 
-  context.system.scheduler.schedule(0.seconds, 3.seconds) {
+  context.system.scheduler.schedule(delay, interval) {
     log.info("--------")
     log.info("Emitting measurement")
     // Just fire new "measurement" to system
