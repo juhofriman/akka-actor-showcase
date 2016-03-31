@@ -23,7 +23,7 @@ class MeasurementEmitter extends Actor with ActorLogging {
   val random = scala.util.Random
 
   def generateMeasurement(): Measurement = {
-    Measurement(LocalTime.now(), random.nextLong, random.nextLong)
+    Measurement("mez-1", LocalTime.now(), random.nextLong, random.nextLong)
   }
 
   context.system.scheduler.schedule(0.seconds, 3.seconds) {

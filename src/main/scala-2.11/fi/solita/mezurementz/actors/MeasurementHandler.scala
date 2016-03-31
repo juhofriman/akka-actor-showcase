@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.pattern.ask
 import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
-import fi.solita.mezurementz.messages.{AnalyzedMeasurement, PleaseAnalyzeThis, Measurement}
+import fi.solita.mezurementz.messages.{Alarm, AnalyzedMeasurement, PleaseAnalyzeThis, Measurement}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -32,7 +32,7 @@ class MeasurementHandler extends Actor with ActorLogging {
       analyzationResult.map { analyzationResult =>
         if(analyzationResult.isAlarm) {
           // Trigger alarm in the system
-          log.warning(s"ALARM: ${analyzationResult.payload}")
+          context.actorSelection("/user/alarm-service") ! Alarm(analyzationResult.measurement, analyzationResult.payload)
         }
       }
 
