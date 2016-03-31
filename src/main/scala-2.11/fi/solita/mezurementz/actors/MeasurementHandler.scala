@@ -20,6 +20,7 @@ class MeasurementHandler extends Actor with ActorLogging {
   log.info("Hello! I'm measurement handler")
 
   val measurementCount = new AtomicInteger(0)
+  val measurementsAnalyzedCount = new AtomicInteger(0)
   val alarmingMeasurementsCount = new AtomicInteger(0)
   val sumOfProcessingTimes = new AtomicLong(0)
   val hasAlarms = scala.collection.mutable.Set[String]()
@@ -37,20 +38,23 @@ class MeasurementHandler extends Actor with ActorLogging {
 
       // Future callback using map
       analyzationResult.map { analyzationResult =>
+        log.info("Received anylzation")
+        measurementsAnalyzedCount.incrementAndGet()
         if(analyzationResult.isAlarm) {
           // Trigger alarm in the system
           context.actorSelection("/user/alarm-service") ! Alarm(analyzationResult.measurement, analyzationResult.payload)
           alarmingMeasurementsCount.incrementAndGet()
           hasAlarms.add(analyzationResult.measurement.identifier)
         }
+        sumOfProcessingTimes.addAndGet(Instant.now().toEpochMilli - measurement.timestamp.toEpochMilli)
       }
-    sumOfProcessingTimes.addAndGet(Instant.now().toEpochMilli - measurement.timestamp.toEpochMilli)
 
     case strCommand: String =>
       sender() ! Map[String, String](
         "measurementsReceived" -> measurementCount.get().toString,
+        "measurementsProcessed" -> measurementsAnalyzedCount.get().toString,
         "alarmingMeasurements" -> alarmingMeasurementsCount.get().toString,
-        "averageMeasurementProcessingTime" -> (sumOfProcessingTimes.get().toFloat / measurementCount.get()).toString,
+        "averageMeasurementProcessingTime" -> (sumOfProcessingTimes.get().toFloat / measurementsAnalyzedCount.get()).toString,
         "hasAlarms" -> hasAlarms.mkString(","))
 
     case _ => log.info("Received unrecognized message!")
